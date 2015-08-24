@@ -12,10 +12,12 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.app.ListFragment;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.view.ViewPager;
 
 import android.app.DownloadManager;
 
+import android.content.Context;
 import android.content.Intent;
 
 import android.view.LayoutInflater;
@@ -50,25 +52,30 @@ public class MainActivity extends FragmentActivity {
 	
 	static private final String URL = "http://23.253.105.192/";
 	static private final String TAG = "DanVideoTester";
+	static private final String DIR = Environment.getExternalStorageDirectory() + "/Download/"+TAG;
 	static private final String VideoKey = "VIDKEY";
+	
 	
 	static private final int NUM_PAGES = 2;
 
     MyAdapter mAdapter;
-
     ViewPager mPager;
-
+    static private File APP_DIR;
+    
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.fragment_pager);
-
+        
+        APP_DIR = getApplicationContext().getFilesDir();
+        
         mAdapter = new MyAdapter(getSupportFragmentManager());
 
         mPager = (ViewPager)findViewById(R.id.pager);
         mPager.setAdapter(mAdapter);
     }
-
+    
+    
     public static class MyAdapter extends FragmentPagerAdapter {
         public MyAdapter(FragmentManager fm) {
             super(fm);            
@@ -88,7 +95,9 @@ public class MainActivity extends FragmentActivity {
             return ArrayListFragment.newInstance(position);
         }
     }
-
+    
+    //THIS HANDLES THE FIRST FRAGMENT WE ENCOUNTER
+    //IT DISPLAYS THE WEBVIEW AND SETS THINGS LIKE WHAT TO DO WHEN DOWNLOADING
     public static class VidViewFragment extends WebViewFragment {
     	private String mURL; 
     	
@@ -132,7 +141,7 @@ public class MainActivity extends FragmentActivity {
 	        			            String filePath = TAG +"/"+ urlSplit[urlSplit.length-1];
 	        			            
 	        			            Log.i(TAG, "Creating Directory" + filePath);
-	        			            File folder = new File(Environment.getExternalStorageDirectory() +"/Download/"+ TAG);
+	        			            File folder = new File(DIR);
 	        			            boolean success = true;
 	        			            if (!folder.exists()) {
 	        			                success = folder.mkdir();
@@ -141,7 +150,7 @@ public class MainActivity extends FragmentActivity {
 	        			                // Do something on success
 	        				            request.allowScanningByMediaScanner();
 	        				            request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED); //Notify client once download is completed!
-	        				            request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, filePath);
+	        				            //request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, filePath);
 	        				            DownloadManager dm = (DownloadManager) getActivity().getSystemService(DOWNLOAD_SERVICE);
 	        				            dm.enqueue(request);
 	        				            Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT); //This is important!
@@ -167,6 +176,9 @@ public class MainActivity extends FragmentActivity {
 
     
     
+    
+    //THIS HANDLES WHAT HAPPENS WHEN YOU SWIPE LEFT
+    //IT POPULATES AND DECIDES WHAT HAPPENS WHEN YOU CLICK A LIST ELEMENT
     
     public static class ArrayListFragment extends ListFragment {
         int mNum;
@@ -229,15 +241,14 @@ public class MainActivity extends FragmentActivity {
         private List<String> getFileNames() {
         	List<String> fileNames = new ArrayList<String>();
         	
-        	String path = Environment.getExternalStorageDirectory() +"/Download/"+ TAG;
-        	File folder = new File(path);
+        	File folder = new File(DIR);
             boolean success = true;
             
             if (!folder.exists()) {
                 success = folder.mkdir();
             }
             else {
-            	File f = new File(path);
+            	File f = new File(DIR);
                 File[] files = f.listFiles();                
                 for(int i=0; i<files.length; i++){
                 	fileNames.add(files[i].getName());
@@ -249,7 +260,7 @@ public class MainActivity extends FragmentActivity {
         @Override
         public void onListItemClick(ListView l, View v, int position, long id) {
             String file = (String)l.getItemAtPosition(position);
-            String path = Environment.getExternalStorageDirectory() +"/Download/"+ TAG + "/" + file;
+            String path = DIR + "/" + file;
             Log.i(TAG, "PATH CHOSEN: " + path);            
             View mainView = (View)((View)((View)v.getParent()).getParent()).getParent();
             
